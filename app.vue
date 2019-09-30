@@ -1,5 +1,6 @@
 <template>
 	<div class="center">
+		<h3>方法一：</h3>
 		<div class="margin-bottom">
 			<input v-model.number="row" type="number"/>
 			<input v-model.number="col" type="number"/>
@@ -21,11 +22,15 @@
 		<div>
 			所选择表格组成的图形是：<span class="red">{{decription}}</span>
 		</div>
+		<h3>方法二：</h3>
+		<second></second>
 	</div>
 </template>
 
 <script>
+  import Second from './second.vue'
   export default {
+    components: { Second },
     data () {
       return {
         row: '', // 输入的行数
