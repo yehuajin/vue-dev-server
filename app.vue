@@ -86,9 +86,13 @@
 				} else if (!this.isSuccession(selectIndexs)) { // 判读row是否连续
           this.decription = '不规则的'
         } else {
-          // 判断所有row数组是否一样长首位是否相等
           this.selectItems[selectIndexs[0]].sort()
-					let itemLength = this.selectItems[selectIndexs[0]].length
+          // 第一行是否连续
+          if (!this.isSuccession(this.selectItems[selectIndexs[0]])) {
+            this.decription = '不规则的'
+            return false
+          }
+          // 判断所有row数组是否一样长最小的是否相等，是否连续
           for (let i = 1; i < length; i++) {
             this.selectItems[selectIndexs[i]].sort()
             if (this.selectItems[selectIndexs[0]].length !== this.selectItems[selectIndexs[i]].length) {
@@ -97,7 +101,7 @@
             } else if (this.selectItems[selectIndexs[0]][0] !== this.selectItems[selectIndexs[i]][0]) {
               this.decription = '不规则的'
               return false
-						} else if (this.selectItems[selectIndexs[0]][itemLength] !== this.selectItems[selectIndexs[i]][itemLength]) {
+						} else if (!this.isSuccession(this.selectItems[selectIndexs[1]])) {
               this.decription = '不规则的'
               return false
             }
