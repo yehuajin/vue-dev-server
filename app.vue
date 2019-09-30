@@ -30,7 +30,8 @@
       return {
         row: '', // 输入的行数
 				col: '', // 输入的列数
-				selectItems: [], // 选择单元格行为索引，值为列组成的数组
+        selectItemNum: 0, // 选择的单元格个数
+				selectCoordinates: new Map(), // 用于存储每个单元格四个角的坐标
 				rowCol: [], // 用于生成表格
 				decription: '', // 是否是规则图形描述
 				tableKey: '' // 用清除表格选中的样式
@@ -39,84 +40,61 @@
 		methods: {
       // 给生成table的列赋值，重置相关参数
       productTable () {
+        this.decription = ''
+				this.selectItemNum = 0
         this.tableKey = new Date().getTime()
-        this.selectItems = []
+        this.selectCoordinates = new Map()
         this.rowCol = [this.row, this.col]
 			},
-			// 点击切换tr选中与否
+			// 点击切换tr选中与否,并记录坐标
       cellClick (i, j, e) {
         let classNames = e.target.getAttribute('class')
 				if (!classNames) {
+          this.selectItemNum += 1
           e.target.setAttribute('class', 'yellow-bg')
-					if (this.selectItems[i]) {
-            this.selectItems[i].push(j)
-					} else {
-            this.selectItems[i] = [j]
-					}
+          this.selectCoordinates.set(i + '' + j, (this.selectCoordinates.get(i + '' + j) || 0) + 1)
+          this.selectCoordinates.set((i + 1) + '' + j, (this.selectCoordinates.get((i + 1) + '' + j) || 0) + 1)
+          this.selectCoordinates.set(i + '' + (j + 1), (this.selectCoordinates.get(i + '' + (j + 1)) || 0) + 1)
+          this.selectCoordinates.set((i + 1) + '' + (j + 1), (this.selectCoordinates.get((i + 1) + '' + (j + 1)) || 0) + 1)
 				} else {
+          this.selectItemNum -= 1
           e.target.setAttribute('class', '')
-          this.selectItems[i].splice(this.selectItems[i].indexOf(j), 1)
+          this.selectCoordinates.set(i + '' + j, (this.selectCoordinates.get(i + '' + j) || 0) - 1)
+          this.selectCoordinates.set((i + 1) + '' + j, (this.selectCoordinates.get((i + 1) + '' + j) || 0) - 1)
+          this.selectCoordinates.set(i + '' + (j + 1), (this.selectCoordinates.get(i + '' + (j + 1)) || 0) - 1)
+          this.selectCoordinates.set((i + 1) + '' + (j + 1), (this.selectCoordinates.get((i + 1) + '' + (j - 1)) || 0) - 1)
 				}
 			},
 			// 方法1
       judgeShape () {
-        let selectIndexs = []
-				for (let i = 0; i < (this.rowCol[0] || 0); i++) {
-          if (this.selectItems[i] && this.selectItems[i].length) {
-            selectIndexs.push(i)
+        let rowIndexArr = []
+				let colIndexArr = []
+        this.selectCoordinates.forEach((value, key) => {
+          if (value > 0) {
+            let arr = key.split('')
+            rowIndexArr.push(arr[0])
+            colIndexArr.push(arr[1])
 					}
-				}
-				let length = selectIndexs.length
-        selectIndexs.sort()
-				// 没有选择
-				if (!length) {
-          this.decription = ''
-				} else if (length === 1) { // 只选择一行
-          // 只有一列
-					if (this.selectItems[selectIndexs[0]].length === 1) {
-            this.decription = '规则的'
-						return
-					}
-          // 判断col是否连续
-					if (this.isSuccession(this.selectItems[selectIndexs[0]].sort())) {
-            this.decription = '规则的'
-					} else {
-            this.decription = '不规则的'
-					}
-				} else if (!this.isSuccession(selectIndexs)) { // 判读row是否连续
+				})
+				// 排序
+        rowIndexArr.sort()
+        colIndexArr.sort()
+				// 左上角的点存在且只有一个
+				if (this.selectCoordinates.get(rowIndexArr[0] + '' + colIndexArr[0]) !== 1) {
+          this.decription = '不规则的'
+				} else if (this.selectCoordinates.get(rowIndexArr[rowIndexArr.length - 1] + '' + colIndexArr[colIndexArr.length - 1]) !== 1) {
+          // 右下角的点存在且只有一个
           this.decription = '不规则的'
         } else {
-          this.selectItems[selectIndexs[0]].sort()
-          // 第一行是否连续
-          if (!this.isSuccession(this.selectItems[selectIndexs[0]])) {
+          // 长乘宽等于选择的单元格数
+          let rowLenth = rowIndexArr[rowIndexArr.length - 1] - rowIndexArr[0]
+          let colLenth = colIndexArr[colIndexArr.length - 1] - colIndexArr[0]
+					if (rowLenth * colLenth !== this.selectItemNum) {
             this.decription = '不规则的'
-            return false
-          }
-          // 判断所有row数组是否一样长最小的是否相等，是否连续
-          for (let i = 1; i < length; i++) {
-            this.selectItems[selectIndexs[i]].sort()
-            if (this.selectItems[selectIndexs[0]].length !== this.selectItems[selectIndexs[i]].length) {
-              this.decription = '不规则的'
-              return false
-            } else if (this.selectItems[selectIndexs[0]][0] !== this.selectItems[selectIndexs[i]][0]) {
-              this.decription = '不规则的'
-              return false
-						} else if (!this.isSuccession(this.selectItems[selectIndexs[1]])) {
-              this.decription = '不规则的'
-              return false
-            }
-          }
-          this.decription = '规则的'
+					} else {
+            this.decription = '规则的'
+					}
 				}
-			},
-			// 判断数组是否连续
-			isSuccession (item) {
-        for (let i = 1; i < item.length; i++) {
-          if (item[i - 1] + 1 !== item[i]) {
-            return false
-          }
-        }
-        return true
 			}
 		}
   }
